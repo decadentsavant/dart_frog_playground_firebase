@@ -1,6 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 import '../../models/models.dart';
-import '../../services/firebase_service.dart';
+import '../../services/services.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   /// Getting the status of User Authentication from middleware
@@ -14,45 +15,90 @@ Future<Response> onRequest(RequestContext context) async {
       /// Get the FirebaseService client object
       final firebaseService = await context.read<Future<FirebaseService>>();
 
+            /// Mongo: Get the MongoDBService client object from middlware
+      final mongoDbService = await context.read<Future<MongoDBService>>();
+
       switch (request.method) {
         // Hande GET request type
         case HttpMethod.get:
           final params = request.uri.queryParameters;
 
-          /// validate the parameters
-          if (params.isNotEmpty) {
-            final category = params['category'];
-            if (category != null) {
-              final ref =
-                  firebaseService.realtimeDatabase.reference().child('Meals');
-              var mealsList = <Meal>[];
+          // /// validate the parameters
+          // if (params.isNotEmpty) {
+          //   final category = params['category'];
+          //   if (category != null) {
+          //     final ref =
+          //         firebaseService.realtimeDatabase.reference().child('Meals');
+          //     var mealsList = <Meal>[];
 
-              /// Applying search query using specific attribute i.e. Category
-              final data =
-                  await ref.orderByChild('category').equalTo(category).once();
+          //     /// Applying search query using specific attribute i.e. Category
+          //     final data =
+          //         await ref.orderByChild('category').equalTo(category).once();
 
-              /// If no record found against the query
-              if (data.value == null) {
+          //     /// If no record found against the query
+          //     if (data.value == null) {
+          //       return Response.json(
+          //         body: {
+          //           'status': 200,
+          //           'message': 'Fetched all meals records successfully',
+          //           'data': mealsList,
+          //         },
+          //       );
+          //     }
+
+          //     /// Convert DataSnapshot object to Json object
+          //     final mapOfMaps =
+          //         Map<String, dynamic>.from(data.value as Map<String, dynamic>);
+
+          //     /// Mapping Json objects to Meals model and populating the List
+          //     mealsList = mapOfMaps.values
+          //         .map(
+          //           (dynamic entry) =>
+          //               Meal.fromJson(entry as Map<String, dynamic>),
+          //         )
+          //         .toList();
+
+               /// Open the Database to perform action
+         await mongoDbService.openDb();
+
+         /// Accessing the 'Meals' collection type in Database
+         final mealsCollection = mongoDbService.database.collection('Meals');
+
+         /// validating the parameters
+         if (params.isNotEmpty) {
+           final category = params['category'];
+           if (category != null) {
+             var mealsList = <Meal>[];
+
+             /// Applying search query using specific attribute i.e. Category
+             final record = await mealsCollection
+                 .find(
+                   where.eq('category', category),
+                 )
+                 .toList();
+
+             /// close the Database after performing the action
+             await mongoDbService.closeDb();
+
+             /// If no record found against the query
+              if (record.isEmpty) {
                 return Response.json(
                   body: {
-                    'status': 200,
+                    'status': 201,
                     'message': 'Fetched all meals records successfully',
                     'data': mealsList,
                   },
                 );
               }
 
-              /// Convert DataSnapshot object to Json object
-              final mapOfMaps =
-                  Map<String, dynamic>.from(data.value as Map<String, dynamic>);
-
-              /// Mapping Json objects to Meals model and populating the List
-              mealsList = mapOfMaps.values
+              /// Mapping Json objects to to Meals model and populating the List
+              mealsList = record
                   .map(
                     (dynamic entry) =>
                         Meal.fromJson(entry as Map<String, dynamic>),
                   )
                   .toList();
+
 
               return Response.json(
                 body: {

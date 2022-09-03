@@ -1,6 +1,8 @@
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'package:dart_frog/dart_frog.dart';
 import '../../models/models.dart';
-import '../../services/firebase_service.dart';
+import '../../services/services.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   /// Getting the status of User Authentication
@@ -15,28 +17,50 @@ Future<Response> onRequest(RequestContext context) async {
       /// Get the FirebaseService client object
       final firebaseService = await context.read<Future<FirebaseService>>();
 
+      /// Mongo: Get the MongoDBService client object from middlware
+      final mongoDbService = await context.read<Future<MongoDBService>>();
+
       /// switch cases to handle multiple type of requests
       switch (request.method) {
 
         /// Handling GET request type
         case HttpMethod.get:
 
-          /// Getting all the collection record in the from of Snapshot object
-          final snapshot = await firebaseService.realtimeDatabase
-              .reference()
-              .child('Meals')
-              .once();
+          // /// FB: Getting all the collection record in the from of Snapshot object
+          // final snapshot = await firebaseService.realtimeDatabase
+          //     .reference()
+          //     .child('Meals')
+          //     .once();
 
-          /// converting snapshot object to Json object
-          final mapOfMaps =
-              Map<String, dynamic>.from(snapshot.value as Map<String, dynamic>);
+          // /// FB: converting snapshot object to Json object
+          // final mapOfMaps =
+          //     Map<String, dynamic>.from(snapshot.value as Map<String, dynamic>);
+
+          // /// FB: Mapping Json objects to to Meals model and populating the List
+          // final mealsList = mapOfMaps.values
+          //     .map(
+          //       (dynamic entry) => Meal.fromJson(entry as Map<String, dynamic>),
+          //     )
+          //     .toList();
+
+          /// Open the Database to perform action
+          await mongoDbService.openDb();
+
+          /// Accessing the 'Meals' collection type in Database
+          final mealsCollection = mongoDbService.database.collection('Meals');
+
+          /// Getting all the collection record in the from of List of objects
+          final mealsJson = await mealsCollection.find().toList();
 
           /// Mapping Json objects to to Meals model and populating the List
-          final mealsList = mapOfMaps.values
+          final mealsList = mealsJson
               .map(
                 (dynamic entry) => Meal.fromJson(entry as Map<String, dynamic>),
               )
               .toList();
+
+          /// close the Database after performing the action
+          await mongoDbService.closeDb();
 
           /// Generate the success response object containing message and List
           return Response.json(
