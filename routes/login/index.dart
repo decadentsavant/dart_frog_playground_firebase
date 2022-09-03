@@ -7,7 +7,7 @@ import 'package:jaguar_jwt/jaguar_jwt.dart';
 import '../../config/configurations.dart';
 import '../../exceptions/firebase_exception_code.dart';
 import '../../models/models.dart';
-import '../../services/firebase_service.dart';
+import '../../services/services.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   try {
