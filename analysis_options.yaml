@@ -5,3 +5,4 @@ analyzer:
 linter:
   rules:
     file_names: false
+    no_default_cases: false
