@@ -11,5 +11,7 @@ Handler middleware(Handler handler) {
       await firebaseService.init();
       return firebaseService;
     }),
+  ).use(
+    (handler) => handler.use(authenticateRequest()),
   );
 }
