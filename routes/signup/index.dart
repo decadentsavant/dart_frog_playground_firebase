@@ -4,15 +4,18 @@ import 'package:firebase_dart/firebase_dart.dart';
 
 import '../../exceptions/firebase_exception_code.dart';
 import '../../models/models.dart';
-import '../../services/firebase_service.dart';
+import '../../services/services.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   try {
     /// Access the request from provided context
     final request = context.request;
 
-    /// Get the FirebaseService client object from middleware
+    /// FB: Get the FirebaseService client object from middleware
     final firebaseService = await context.read<Future<FirebaseService>>();
+
+    /// Mongo: Get the MongoDBService client object from middlware
+    final mongoDbServce = await context.read<Future<MongoDBService>>();
 
     /// Using switch cases to handle multiple type of requests
     switch (request.method) {
@@ -29,21 +32,34 @@ Future<Response> onRequest(RequestContext context) async {
         /// Convert the json object to Users model
         final userData = AuthUser.fromJson(requestData);
 
-        /// Firebase Auth create User method
+        /// FB: Firebase Auth create User method
         await firebaseService.firebaseAuth.createUserWithEmailAndPassword(
           email: userData.email!,
           password: userData.password!,
         );
 
-        /// Access the 'Users' collection type in Database
-        final usersRef =
+        /// FB: Access the 'Users' collection type in Firebase realtime database
+        final usersRefFirebase =
             firebaseService.realtimeDatabase.reference().child('Users');
 
-        /// Get a Unique location in DB
-        final newUSerRecord = usersRef.push();
+        /// FB: Get a Unique location in Firebase database
+        final newUSerRecordFirebase = usersRefFirebase.push();
 
-        /// Add the User's data to database
-        await newUSerRecord.set(userData.toJson());
+        /// FB: Add the User's data to Firebase database
+        await newUSerRecordFirebase.set(userData.toJson());
+
+        // Mongo: Open the Mongo database to perform action
+        await mongoDbServce.openDb();
+
+        /// Mongo: Access the "Users" collection type in MongoDb database
+        final usersCollectionMongoDb =
+            mongoDbServce.database.collection('Users');
+
+        /// Mongo: Add user's data to MongoDb database
+        await usersCollectionMongoDb.insertOne(userData.toJson());
+
+        /// Mongo: Close the Mongo database after performing action
+        await mongoDbServce.closeDb();
 
         /// Generate the success response object containing message
         return Response.json(
