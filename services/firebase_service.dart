@@ -35,7 +35,7 @@ class FirebaseService {
       _firebaseAuth = FirebaseAuth.instanceFor(app: firebaseApp);
       _realtimeDatabase = FirebaseDatabase(
         app: firebaseApp,
-        databaseURL: Configurations.databaseUrl,
+        databaseURL: Configurations.firebaseDatabaseUrl,
       );
       _initialized = true;
     }
