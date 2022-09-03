@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:dart_frog/dart_frog.dart';
 import '../../models/models.dart';
-import '../../services/firebase_service.dart';
+import '../../services/services.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   /// Getting the status of User Authentication
@@ -15,18 +15,17 @@ Future<Response> onRequest(RequestContext context) async {
       /// Access the request from provided context
       final request = context.request;
 
-      /// Get the FirebaseService client object from middleware
+      /// FB: Get the FirebaseService client object from middleware
       final firebaseService = await context.read<Future<FirebaseService>>();
+
+      /// Mongo: Get the MongoDBService client object from middlware
+      final mongoDbService = await context.read<Future<MongoDBService>>();
 
       /// switch cases to handle multiple type of requests
       switch (request.method) {
 
         /// Handling POST request type
         case HttpMethod.post:
-
-          /// Access the 'Meals' collection type in Database
-          final usersRef =
-              firebaseService.realtimeDatabase.reference().child('Meals');
 
           /// Get the Request body
           final requestBody = await request.body();
@@ -37,9 +36,26 @@ Future<Response> onRequest(RequestContext context) async {
           /// Convert the json object to Meals model
           final mealsData = Meal.fromJson(requestData);
 
-          /// Add the data to the database
-          final newMealRecord = usersRef.push();
-          await newMealRecord.set(mealsData.toJson());
+          /// FB: Access the 'Meals' collection type in Database
+          final usersRefFirebase =
+              firebaseService.realtimeDatabase.reference().child('Meals');
+
+          /// FB: Add the data to the database
+          final newMealRecordFirebase = usersRefFirebase.push();
+          await newMealRecordFirebase.set(mealsData.toJson());
+
+          /// Mongo: Open the database
+          await mongoDbService.openDb();
+
+          /// Mongo: Access the 'Meals' collection type in Database
+          final mealsCollectionMongo =
+              mongoDbService.database.collection('Meals');
+
+          /// Mongo: Insert meal into Mongo database
+          await mealsCollectionMongo.insert(mealsData.toJson());
+
+          /// Mongo: Close Mongo database
+          await mongoDbService.closeDb();
 
           /// Generate the success response object containing message and List
           return Response.json(
