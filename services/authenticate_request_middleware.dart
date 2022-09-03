@@ -7,7 +7,7 @@ Middleware authenticateRequest() {
   return provider<bool>((context) {
     final request = context.request;
     // retrieve login information and auth type
-    final headers = request.headers as Map<String, String>;
+    final headers = request.headers;
     final authData = headers['Authorization'];
 
     // if auth type is JWT token type, verify token and
