@@ -1,12 +1,15 @@
-# dart_frog_playground_firebase
+# Dart Frog 🐸
 
-[![style: very good analysis][very_good_analysis_badge]][very_good_analysis_link]
-[![License: MIT][license_badge]][license_link]
-[![Powered by Dart Frog](https://img.shields.io/endpoint?url=https://tinyurl.com/dartfrog-badge)](https://dartfrog.vgv.dev)
+---
 
-An example application built with dart_frog
+### Back End Framework 🔥
 
-[license_badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[license_link]: https://opensource.org/licenses/MIT
-[very_good_analysis_badge]: https://img.shields.io/badge/style-very_good_analysis-B22C89.svg
-[very_good_analysis_link]: https://pub.dev/packages/very_good_analysis
+Created a back end application with the goal of learning more about the underpinnings of services and REST APIs 
+---
+
+#### Learnings 🎯
+
+1. Postman - utilized Postman to build, test, and iterate on the APIs.
+2. Status Codes, Query Parameters, static/dynamic routes, etc.
+3. JWT auth with Middleware
+4. Firebase Realtime Database & MongoDB - wired up both databases as learning exercise
